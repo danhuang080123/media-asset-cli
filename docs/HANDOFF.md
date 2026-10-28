@@ -1,8 +1,17 @@
 # 项目交接 / HANDOFF
 
-> 更新时间：2026-10-27
+> 更新时间：2026-10-28
 > 用途：换设备、新开会话、上下文不足时，先读这个文件。
 > 这个文件是“外部记忆”，比聊天记录可靠。
+
+## 0. 先看这一句
+
+我以后把对话分成两种：
+
+1. **规划对话**：只负责目标、周计划、优先级、复盘、资源选择、投递节奏；不展开讲语法，不贴完整代码。
+2. **执行对话**：具体写某个功能、某个报错、某个知识点；一次只解决一个具体问题。
+
+这份文件主要给“规划对话”用；执行对话只需要看当前任务那一节。
 
 ## 1. 我是谁、目标是什么
 
@@ -10,12 +19,13 @@
 - 目标：2028 年大二下，在郑州找到第一段 C++ 相关实习。
 - 竞赛背景：CSP-S 2024 120 分，NOIP 2024 64 分；普及组较稳、提高组入门。
 - 已会：C++ 基础语法、数组、递归、DFS/回溯、MySQL 基础、Linux 命令行。
-- 还没会/较弱：工程化（头文件、多文件、链接、CMake、Git）、STL 容器、类/对象、调试器。
+- 工程化还在补：头文件、多文件、链接器、CMake、Git 都只能算入门。
 
 ## 2. 当前项目
 
 - 仓库：`git@github.com:danhuang080123/media-asset-cli.git`
 - 本地路径：`~/code/media-asset-cli`（Ubuntu 虚拟机）
+- 最新提交：`8909db1 feat: add delete command with --id`
 - 技术栈：C++17、CMake、MySQL 8.0（Docker）、Git、VS Code Remote-SSH
 - 项目目标：融媒体素材管理命令行工具，支持素材的增删改查、标签、检索、CSV 导入、统计。
 
@@ -24,15 +34,17 @@
 - 仓库骨架：`README.md`、`CMakeLists.txt`、`.gitignore`、`docs/schema.sql`
 - MySQL 三张表：`material`、`tag`、`material_tag`
 - `src/db/MySQL.h` / `MySQL.cpp`：连接封装（构造连接、析构关闭）
-- `src/main.cpp`：`add`、`list` 命令
+- `src/main.cpp`：`add`、`list`、`delete --id`
 - `examples/01-connect.cpp`：最小连接示例
 - `examples/mysql_api_demo.cpp`：MySQL C API 示范（连接、查询、插入、删除）
-- 洛谷 P1219 八皇后已 AC（代码在 `~/code/Luogu/P1219.cpp`，不一定在仓库里）
+- 洛谷 P1219 八皇后已 AC（代码在 `~/code/Luogu/P1219.cpp`）
+- VS Code 全局构建：打开 `~/code` 作为工作区时，`Ctrl+Shift+B` 编译当前文件到同目录 `bin/`
+- `HANDOFF.md` 已提交到仓库
 
 ### 还没完成
 
-- `delete --id`：删除一行素材
 - `update --id --title`：修改标题
+- `list --type`：按类型过滤
 - 标签：加标签、给素材挂标签
 - 按标签检索
 - CSV 导入
@@ -40,7 +52,28 @@
 - README 截图/演示视频
 - 把 `main.cpp` 里的数据库操作拆到 `MaterialRepository`
 
-## 3. 环境与常用命令
+## 3. 我已经理解的内容（不用再从零讲）
+
+- `MySQL.h` 的每一行：`#pragma once`、`class`、构造/析构、`= delete`、`get()`、`conn_`
+- `MYSQL*` 是连接句柄；`mysql_init` 返回指针
+- 构造函数 = 对象创建时自动连接；析构函数 = 对象销毁时自动关闭
+- 为什么禁止拷贝：两个对象共用 `conn_` 会重复 `mysql_close`
+- `host.c_str()`：`std::string` → `const char*`，给 C API 用
+- `try/catch`、`throw`、`std::exception`、`e.what()`、切片
+- 多文件编译、`.o`、链接器、CMake 的 configure/build
+- 指针、引用、`const`、`nullptr` 的基本用法
+
+## 4. 还比较弱、需要从零讲的内容
+
+- `std::vector`、`std::array`、`std::string` 的常用操作
+- `class` 的继承、多态、虚函数
+- CMake 的变量、`target_link_libraries`、库的查找
+- Git 分支、回滚、冲突处理
+- gdb 调试、断点、backtrace
+- Qt、FFmpeg、网络编程（还没开始）
+- 多文件项目的分层：`model` / `db` / `service`
+
+## 5. 环境与常用命令
 
 - Windows + Hyper-V，Ubuntu 26.04 虚拟机。
 - SSH 配置：`Host ubuntu-vm` → `danhuang-ubuntu.local`，用户 `danhuang`。
@@ -49,7 +82,9 @@
 - **密码不写进仓库**，本地通过环境变量传：
 
 ```bash
+export MYSQL_USER=media
 export MYSQL_PASSWORD='本地密码'
+export MYSQL_DATABASE=media_asset
 ```
 
 ### 编译项目
@@ -58,6 +93,13 @@ export MYSQL_PASSWORD='本地密码'
 cd ~/code/media-asset-cli
 cmake -B build
 cmake --build build -j
+./build/media_asset_cli list
+```
+
+### 运行 delete
+
+```bash
+./build/media_asset_cli delete --id 2
 ./build/media_asset_cli list
 ```
 
@@ -85,10 +127,10 @@ git commit -m "说明"
 git push
 ```
 
-## 4. 下一步优先级
+## 6. 下一步优先级
 
-1. `delete --id`：`DELETE FROM material WHERE id = ...`，用 `mysql_affected_rows` 判断有没有删到。
-2. `update --id --title` 或 `list --type`：二选一。
+1. `update --id --title`：改标题，练 `UPDATE` 和 `mysql_affected_rows`。
+2. `list --type`：加过滤条件，练 `WHERE`。
 3. 标签、按标签检索。
 4. CSV 导入、统计。
 5. 把数据库操作拆到 `src/db/MaterialRepository.h/.cpp`。
@@ -99,45 +141,70 @@ git push
 - 工程：先理解多文件编译、`.o`、链接器，再理解 CMake；不要一次学完。
 - 项目：每完成一个小功能就 commit + push。
 
-## 5. 教学偏好（给 AI 的说明）
+## 7. 规划对话的规则（给 AI）
 
-- 我是**竞赛型 C++**，不是工程型；不要默认我会头文件、多文件、链接器、CMake、Make、Git。
-- 不要默认我会 `class`、`STL`、`vector`、`array`；先讲“它是什么”，再给代码。
-- 先解释名词，再给命令；一次只讲一个概念。
-- 给可运行的小例子；不要一上来贴 200 行。
-- 代码 review 顺序：先正确性，再可读性，最后工程化。
-- 不要直接给完整项目代码；先让我自己写，再指出哪一行错。
-- 我容易在“文件没保存”“路径不对”“大小写”上卡住；遇到报错先让我 `ls -l` / `pwd`。
-- 周末全休，不排任务；周一到周五每天 2.5–3 小时。
+如果你是“规划对话”的 AI：
+
+- 只负责：目标、周计划、优先级、复盘、资源选择、投递节奏。
+- 不要展开讲 C++ 语法、不要贴完整代码；那属于“执行对话”。
+- 每次最多给我 3 件事，按优先级排。
+- 先问我这周实际可用时间，再排计划。
+- 周一到周五学习，周六周日全休；每天 2.5–3 小时。
 - 我容易一次塞太多，请提醒我“今天只做一件事”。
+- 我容易在“文件没保存”“路径不对”“大小写”上卡住；遇到报错先让我 `ls -l` / `pwd`。
 
-## 6. 新会话开场白
+## 8. 执行对话的规则（给 AI）
 
-新开对话时，把下面这段贴进去：
+如果你是“执行对话”的 AI：
+
+- 一次只解决一个具体问题：一个函数、一个报错、一个知识点。
+- 顺序：先解释名词 → 给最小步骤 → 让我自己写 → 只指出错误行。
+- 不要直接给完整实现，除非我明确说“直接帮我改”。
+- 先让我跑 `git status`、`cmake --build build -j`，把第一行报错发你。
+- 不要默认我会 `class`、`STL`、`CMake`、`Git`。
+
+## 9. 新会话开场白
+
+### 规划对话（复制这段）
 
 ```text
-请先读 docs/HANDOFF.md。
+你是我的学习规划教练，不是代码陪练。先读 docs/HANDOFF.md。
 
 我是中原工学院软件工程（融媒体方向）大一学生，目标 2028 年大二下在郑州找第一段 C++ 实习。
-当前项目：media-asset-cli，GitHub: git@github.com:danhuang080123/media-asset-cli.git
-环境：Windows + Hyper-V Ubuntu 26.04，VS Code Remote-SSH；MySQL 8.0 在 Docker，端口 3306，库 media_asset。
-已完成：仓库骨架、三张表、C++ 连接 MySQL、add/list、examples 下的连接和 C API demo。
-还没完成：delete/update、标签检索、CSV、统计。
+当前项目：media-asset-cli，已完成 add/list/delete --id；下一步 update、list --type、标签、CSV、统计。
+我周一到周五每天 2.5–3 小时，周六周日全休。
 
-我是竞赛型 C++：会数组、递归、DFS/回溯；工程化（头文件、多文件、链接、CMake、Git）很弱。
-请教我时：先解释名词，再给命令；一次只讲一个概念；不要默认我会 class/STL/CMake；不要直接给完整代码，先让我写再 review。
+请只负责：本周计划、优先级、复盘、资源选择、投递节奏。
+不要展开讲语法，不要贴完整代码；具体学习我会另开“执行对话”。
+每次最多给我 3 件事，先问我这周实际可用时间。
 ```
 
-## 7. 重要文件
+### 执行对话（复制这段）
+
+```text
+我在做 media-asset-cli 的某个具体任务，遇到一个具体问题。
+先读 docs/HANDOFF.md 的第 2、3、4 节即可。
+
+请按这个顺序：
+1. 先解释我不懂的名词；
+2. 给最小步骤；
+3. 让我自己写；
+4. 只指出我哪一行错，不要直接给完整实现。
+
+我的水平：竞赛型 C++，会数组/递归/DFS；工程化（class、STL、CMake、Git）很弱。
+```
+
+## 10. 重要文件
 
 - `README.md`：项目说明
 - `CMakeLists.txt`：构建配置
 - `docs/schema.sql`：建表 SQL
-- `src/main.cpp`：CLI 入口 + add/list
+- `src/main.cpp`：CLI 入口 + add/list/delete
 - `src/db/MySQL.h` / `MySQL.cpp`：连接封装
 - `examples/mysql_api_demo.cpp`：MySQL C API 示范
+- `docs/HANDOFF.md`：本文件
 
-## 8. 安全注意
+## 11. 安全注意
 
 - 不要把数据库密码、SSH 私钥、`.env` 提交到 Git。
 - `~/mysql/docker-compose.yml` 里有本地密码，不要复制到仓库。

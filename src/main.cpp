@@ -69,6 +69,17 @@ void listMaterials(MySQL& db) {
     mysql_free_result(result);
 }
 
+void deleteMaterial(MySQL& db, unsigned long long id) {
+    const std::string sql =
+        "DELETE FROM material WHERE id = " + std::to_string(id);
+
+    if (mysql_query(db.get(), sql.c_str()) != 0) {
+        throw std::runtime_error(mysql_error(db.get()));
+    }
+
+    std::cout << "deleted rows: " << mysql_affected_rows(db.get()) << "\n";
+}
+
 void printUsage() {
     std::cout
         << "Usage:\n"
@@ -131,6 +142,14 @@ int main(int argc, char** argv) {
             addMaterial(db, title, type, path, size);
         } else if (command == "list") {
             listMaterials(db);
+        } else if (command == "delete") {
+            if (argc < 3) {
+                std::cerr << "usage: media_asset_cli delete <id>\n";
+                return 1;
+            }
+
+            const unsigned long long id = std::stoull(argv[2]);
+            deleteMaterial(db, id);
         } else {
             std::cerr << "Unknown command: " << command << "\n";
             printUsage();

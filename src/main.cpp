@@ -143,12 +143,19 @@ int main(int argc, char** argv) {
         } else if (command == "list") {
             listMaterials(db);
         } else if (command == "delete") {
-            if (argc < 3) {
-                std::cerr << "usage: media_asset_cli delete <id>\n";
+            unsigned long long id = 0;
+
+            for (int i = 2; i < argc; ++i) {
+                if (std::string(argv[i]) == "--id" && i + 1 < argc) {
+                    id = std::stoull(argv[++i]);
+                }
+            }
+
+            if (id == 0) {
+                std::cerr << "usage: media_asset_cli delete --id <id>\n";
                 return 1;
             }
 
-            const unsigned long long id = std::stoull(argv[2]);
             deleteMaterial(db, id);
         } else {
             std::cerr << "Unknown command: " << command << "\n";

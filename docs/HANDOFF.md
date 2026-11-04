@@ -224,3 +224,12 @@ git status && git add . && git commit -m "说明" && git push
 2. 读 §1（真实状态）、§4（时间配额）、§5（当前周）、§6（待确认）；
 3. 先问用户“这周实际可用时间 / 这两天做了什么”，不要重排整份计划；
 4. 规划对话只给最多 3 件事；具体写代码另开执行对话。
+
+**环境重建（新设备没有现成 VM 时）**
+
+- 仓库只是代码。编译要 `build-essential`、`cmake`、`libmysqlclient-dev`；`pkg-config --libs mysqlclient` 能出结果才算装好。
+- 数据库不随仓库走：起 `~/mysql` 的 docker compose，再按 `docs/schema.sql` 建库；密码本地重设，不进仓库。
+- SSH 私钥不在仓库里，新机器要单独拷；没有它 `git push` 和 Remote-SSH 都不通。
+- 自检一条：`cmake -B build && cmake --build build -j && ./build/media_asset_cli list`。
+- **新设备没有 VM 时，本周项目任务无法执行**：只做高数 + 周三复盘，`update` 顺延到第 10 周，不要在新机器上临时装一套环境。
+
